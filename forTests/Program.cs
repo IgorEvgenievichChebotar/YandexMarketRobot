@@ -1,17 +1,21 @@
-﻿using OfficeOpenXml;
+﻿using System.IO;
+using System.Linq;
+using OfficeOpenXml;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 
-IWebDriver driver = new ChromeDriver();
+ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+var excel = new ExcelPackage();
+var driver = new ChromeDriver();
 
 try
 {
     // Переход на страницу Яндекс Маркета
-    driver.Url = "https://market.yandex.ru/";
+    driver.Navigate().GoToUrl("https://market.yandex.ru/");
 
     // Поиск поля для ввода запроса и кнопки для отправки запроса
-    IWebElement searchInput = driver.FindElement(By.Name("text"));
-    IWebElement searchButton = driver.FindElement(By.CssSelector("button.mini-suggest__button"));
+    var searchInput = driver.FindElement(By.Name("text"));
+    var searchButton = driver.FindElement(By.CssSelector("button.mini-suggest__button"));
 
     // Ввод запроса и нажатие кнопки поиска
     searchInput.SendKeys("Носки с дедом морозом");
@@ -23,9 +27,7 @@ try
     var links = driver.FindElements(By.CssSelector("[data-baobab-name='title']")).Take(3).ToList();
 
     // Подготовка к созданию Excel-файла
-    ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-    var package = new ExcelPackage();
-    var worksheet = package.Workbook.Worksheets.Add("Результаты поиска носков");
+    var worksheet = excel.Workbook.Worksheets.Add("Результаты поиска носков");
 
     // Заполнение Excel-файла информацией о товарах
     for (var i = 0; i < names.Count; i++)
@@ -36,10 +38,11 @@ try
     }
 
     // Сохранение Excel-файла
-    package.SaveAs(new FileInfo(@"результаты поиска носков.xlsx"));
+    excel.SaveAs(new FileInfo(@"результаты поиска носков.xlsx"));
 }
 finally
 {
-    // Закрытие браузера
+    // Закрытие браузера и экселя
     driver.Quit();
+    excel.Dispose();
 }
